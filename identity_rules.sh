@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-for r in {1..10}
+for r in {1..100}
 do
 
 	# batch_size = 32

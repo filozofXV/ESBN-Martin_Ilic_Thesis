@@ -166,6 +166,7 @@ def create_task(args, train_shapes, test_shapes):
 	# Training set
 	train_MC_seq = []
 	train_MC_targ = []
+	train_idea = []
 	for t in range(trials_train.shape[0]):
 		pre_MC = trials_train[t,:,:].flatten()[:-1]
 		MC_seq = np.concatenate([pre_MC, train_answer_choices[t]])
@@ -173,9 +174,17 @@ def create_task(args, train_shapes, test_shapes):
 		MC_targ = np.where(train_answer_choices[t] == img_targ_id)[0][0]
 		train_MC_seq.append(MC_seq)
 		train_MC_targ.append(MC_targ)
+		MC_seq_short = MC_seq[4:]
+		solution = MC_seq_short[0]
+		train_idea.append(
+			[index for index, element in enumerate(MC_seq_short[1:]) if element == solution][0]
+			)
+
+		
 	# Test set
 	test_MC_seq = []
 	test_MC_targ = []
+	test_idea = []
 	for t in range(trials_test.shape[0]):
 		pre_MC = trials_test[t,:,:].flatten()[:-1]
 		MC_seq = np.concatenate([pre_MC, test_answer_choices[t]])
@@ -183,9 +192,10 @@ def create_task(args, train_shapes, test_shapes):
 		MC_targ = np.where(test_answer_choices[t] == img_targ_id)[0][0]
 		test_MC_seq.append(MC_seq)
 		test_MC_targ.append(MC_targ)
+		test_idea.append(trials_test[t,1,1])
 
 	# Create training and test sets
-	train_set = {'seq_ind': np.array(train_MC_seq), 'y': np.array(train_MC_targ)}
-	test_set = {'seq_ind': np.array(test_MC_seq), 'y': np.array(test_MC_targ)}
+	train_set = {'seq_ind': np.array(train_MC_seq), 'y': np.array(train_MC_targ), 'idea': np.array(train_idea)}
+	test_set = {'seq_ind': np.array(test_MC_seq), 'y': np.array(test_MC_targ), 'idea': np.array(test_idea)}
 
 	return args, train_set, test_set

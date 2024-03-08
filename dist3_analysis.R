@@ -1,15 +1,16 @@
 # Distribution-of-three task
 
 # Install packages
-install.packages("ggpubr")
-install.packages("rstudioapi")
-install.packages("emmeans")
+# install.packages("ggpubr")
+# install.packages("rstudioapi")
+# install.packages("emmeans")
+# remotes::install_github("dstanley4/apaTables")
 
 library("rstudioapi")   
 library("ggpubr")
 library("car")
 library("emmeans")
-
+library("apaTables")
 
 # CONVOLUTIONAL ENCODER - Loading of data
 #------------------------------------
@@ -71,7 +72,7 @@ for (i in 1:10) {
 # 32 batch size
 
 setwd(dirname(getActiveDocumentContext()$path))  
-setwd("./batchrand32/ESBN_contextnorm_lr0.0005")
+setwd("./test/dist3/batchrand32/ESBN_contextnorm_lr0.0005")
 
 dist3_batchrand32 <- c()
 
@@ -134,45 +135,132 @@ df_dist3 <- data.frame(acc = c(dist3_batchconv32,
                           batch_size = as.factor(rep(c(32,16,8,4), each = 10)),
                           encoder = as.factor(rep(c("conv","rand"), each = 40)))
 
+df_dist3 <- cbind(df_dist3, 
+                  rank_acc = rank(df_dist3$acc, 
+                                  ties.method = "average"))
+
+
 # Show the number of data points in each condition pair 
 table(df_dist3$batch_size, df_dist3$encoder)
 
 # Visualize the data trend, along with their standard error and means 
-p <- ggline(df_dist3, 
-            title = "Plot of test accuracy by encoder and batch size conditions",
-            xlab = "Batch size",
-            ylab = "Accuracy",
-            x = "batch_size", 
-            y = "acc", 
-            color = "encoder",
-            add = c("mean_se"),
-            palette = c("#00AFBB", "#E7B800"))
+df_dist3 %>% 
+  group_by(encoder, batch_size) %>%
+  summarize(mean_acc = mean(acc), sd_acc = sd(acc))
 
-p
+df_dist3 %>% 
+  group_by(encoder) %>%
+  summarize(mean_acc = mean(acc), sd_acc = sd(acc))
 
+df_dist3 %>% 
+  group_by(batch_size) %>%
+  summarize(mean_acc = mean(acc), sd_acc = sd(acc))
+
+# Visualize the data trend, along with their standard error and means 
+p_dist3 <- ggline(
+  df_dist3, 
+  title = "Distribution-of-three: Plot of test accuracy M and CI by encoder and batch size conditions",
+  xlab = "Batch size",
+  ylab = "Accuracy",
+  x = "batch_size", 
+  y = "acc", 
+  color = "encoder",
+  add = c("mean_se"),
+  palette = c("#00AFBB", "#E7B800")
+) 
+
+
+p_dist3
 
 # Two Way Anova
-two_way_anova_dist3 <- aov(acc ~ batch_size * encoder, data = df_dist3)
-
-# Summary of results
-summary(two_way_anova_dist3)
-model.tables(two_way_anova_dist3, type="means", se = TRUE)
-
-
+two_way_anova_dist3<- aov(acc ~ batch_size * encoder,
+                               data = df_dist3)
 
 # Assumption check for ANOVA 
 # Equality of variances
-leveneTestIdentity <- leveneTest(acc ~ batch_size * encoder, data = df_dist3)
-leveneTestIdentity$`Pr(>F)`[1]
+leveneTestdist3 <- leveneTest(two_way_anova_dist3)
+leveneTestdist3$`Pr(>F)`[1]
+leveneTestdist3
 
 # Normality of data
-aov_residuals <- residuals(object = two_way_anova_dist3)
+aov_residuals <- residuals(two_way_anova_dist3)
 shapiro.test(x = aov_residuals )
 
 # Normality of residuals 
-par(mfrow=c(2,2))
+par(mfrow=c(2,1))
 plot(two_way_anova_dist3)
 par(mfrow=c(1,1))
+
+
+
+qqnorm(
+  two_way_anova_dist3$resid, pch = 20, 
+  main = "Q-Q plot for the Two-Way ANOVA performed on untransformed data",
+  cex.lab = 1, cex.axis = 0.7, cex.main = 1
+)
+qqline(two_way_anova_dist3$resid)
+
+
+
+# # Two Way Anova
+# two_way_anova_dist3 <- aov(rank(acc) ~ batch_size * encoder,
+#                                   data = df_dist3,
+#                                   contrasts = list (
+#                                     batch_size = "contr.sum",
+#                                     encoder    = "contr.sum"
+#                                   )
+#                                 )
+# 
+# two_way_anova_dist3 <- Anova(two_way_anova_dist3, type = 'III')
+# two_way_anova_dist3
+# 
+# # Summary of results
+# two_way_anova_dist3$resid
+
+# qqnorm(
+#   two_way_anova_dist3$resid, pch = 20, main = "Q-Q plot for the Two-Way ANOVA performed on rank transformed data",
+#   cex.lab = 1, cex.axis = 0.7, cex.main = 1
+# )
+# qqline(two_way_anova_dist3$resid)
+# 
+# 
+# plot2 <- ggplot(df_identity, aes(x = rank(acc))) +
+#   geom_histogram(aes(color = encoder, fill = encoder),
+#                  alpha = 0.5, position = "identity") +
+#   facet_grid(cols = vars(batch_size)) +
+#   theme_minimal() +
+#   labs(title = "Histogram of task accuracy ranks grouped by encoder and batch size") +
+#   scale_y_continuous("Frequency", breaks = c(1:10)) +
+#   scale_x_continuous("Rank (Accuracy)") +
+#   scale_color_manual(values = c("#00AFBB", "#E7B800")) +
+#   scale_fill_manual(values = c("#00AFBB", "#E7B800"))
+# 
+# 
+# 
+# plot2
+
+# Summary
+
+model.tables(two_way_anova_dist3, type="means", se = TRUE)
+
+p_dist3
+
+# # Visualize the data trend, along with their standard error and means 
+# p_dist3_2 <- ggline(
+#   df_dist3, 
+#   title = "Distribution-of-three: Plot of test accuracy rank M and CI by encoder and batch size conditions",
+#   xlab = "Batch size",
+#   ylab = "Rank(Accuracy)",
+#   x = "batch_size", 
+#   y = "rank_acc", 
+#   color = "encoder",
+#   add = c("mean_se"),
+#   palette = c("#00AFBB", "#E7B800")
+# ) 
+# 
+# 
+# p_dist3_2
+
 
 # Post hoc analysis
 
@@ -209,3 +297,10 @@ contrasts_dist3 <- list (
 posthoc_dist3 <- contrast(estimated_marginal_means_dist3, contrasts_dist3, adjust = "bonf")
 
 posthoc_dist3
+
+
+# Produce ANOVA Tables
+
+table_dist3 <- apa.aov.table(two_way_anova_dist3, table.number = 1)
+apa.save("table_dist3_2.doc", table_dist3)
+
