@@ -31,7 +31,7 @@ setwd("./test/identity_rules/batchconv32/ESBN_contextnorm_lr0.0005")
 # are in separate .txt files (run1.txt, run2.txt, ...)
 identity_batchconv32 <- c()
 
-for (i in 1:10) {
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   identity_batchconv32 <- c(identity_batchconv32, run_i$acc)
 }
@@ -43,7 +43,7 @@ setwd("./test/identity_rules/batchconv16/ESBN_contextnorm_lr0.0005")
 
 identity_batchconv16 <- c()
 
-for (i in 1:10) {
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   identity_batchconv16 <- c(identity_batchconv16, run_i$acc)
 }
@@ -55,7 +55,7 @@ setwd("./test/identity_rules/batchconv8/ESBN_contextnorm_lr0.0005")
 
 identity_batchconv8 <- c()
 
-for (i in 1:10) {
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   identity_batchconv8 <- c(identity_batchconv8, run_i$acc)
 }
@@ -66,7 +66,7 @@ setwd("./test/identity_rules/batchconv4/ESBN_contextnorm_lr0.0005")
 
 identity_batchconv4 <- c()
 
-for (i in 1:10) {
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   identity_batchconv4 <- c(identity_batchconv4, run_i$acc)
 }
@@ -80,7 +80,7 @@ setwd("./test/identity_rules/batchrand32/ESBN_contextnorm_lr0.0005")
 
 identity_batchrand32 <- c()
 
-for (i in 1:10) {
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   identity_batchrand32 <- c(identity_batchrand32, run_i$acc)
 }
@@ -91,7 +91,7 @@ setwd("./test/identity_rules/batchrand16/ESBN_contextnorm_lr0.0005")
 
 identity_batchrand16 <- c()
 
-for (i in 1:10) {
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   identity_batchrand16 <- c(identity_batchrand16, run_i$acc)
 }
@@ -102,7 +102,7 @@ setwd("./test/identity_rules/batchrand8/ESBN_contextnorm_lr0.0005")
 
 identity_batchrand8 <- c()
 
-for (i in 1:10) {
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   identity_batchrand8 <- c(identity_batchrand8, run_i$acc)
 }
@@ -113,7 +113,7 @@ setwd("./test/identity_rules/batchrand4/ESBN_contextnorm_lr0.0005")
 
 identity_batchrand4 <- c()
 
-for (i in 1:10) {
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   identity_batchrand4 <- c(identity_batchrand4, run_i$acc)
 }
@@ -134,8 +134,8 @@ df_identity <- data.frame(acc = c(identity_batchconv32,
                          identity_batchrand16,
                          identity_batchrand8,
                          identity_batchrand4),
-                 batch_size = as.factor(rep(c(32,16,8,4), each = 10)),
-                 encoder = as.factor(rep(c("conv","rand"), each = 40)))
+                 batch_size = as.factor(rep(c(32,16,8,4), each = 100)),
+                 encoder = as.factor(rep(c("conv","rand"), each = 400)))
 
 
 
@@ -172,21 +172,21 @@ p_identity <- ggline(
 
 p_identity
 
-# Visualize the data trend, along with their standard error and means 
-p_identity_2 <- ggline(
-  df_identity, 
-  title = "Identity-rules: Plot of test accuracy rank M and CI by encoder and batch size conditions",
-  xlab = "Batch size",
-  ylab = "Rank(Accuracy)",
-  x = "batch_size", 
-  y = "rank_acc", 
-  color = "encoder",
-  add = c("mean_se"),
-  palette = c("#00AFBB", "#E7B800")
-) 
-
-
-p_identity_2
+# # Visualize the data trend, along with their standard error and means 
+# p_identity_2 <- ggline(
+#   df_identity, 
+#   title = "Identity-rules: Plot of test accuracy rank M and CI by encoder and batch size conditions",
+#   xlab = "Batch size",
+#   ylab = "Rank(Accuracy)",
+#   x = "batch_size", 
+#   y = "rank_acc", 
+#   color = "encoder",
+#   add = c("mean_se"),
+#   palette = c("#00AFBB", "#E7B800")
+# ) 
+# 
+# 
+# p_identity_2
 
 
 
@@ -210,17 +210,17 @@ qqline(two_way_anova_identity$resid)
 
 # Assumption check for ANOVA 
 # Equality of variances
-leveneTestIdentity <- leveneTest(two_way_anova_identity_real_2)
+leveneTestIdentity <- leveneTest(two_way_anova_identity)
 leveneTestIdentity$`Pr(>F)`[1]
 leveneTestIdentity
 
 # Normality of data
-aov_residuals <- residuals(two_way_anova_identity_real_2)
+aov_residuals <- residuals(two_way_anova_identity)
 shapiro.test(x = aov_residuals )
 
 # Normality of residuals 
 par(mfrow=c(2,1))
-plot(two_way_anova_identity_real_2)
+plot(two_way_anova_identity)
 par(mfrow=c(1,1))
 
 
@@ -289,8 +289,8 @@ contrasts_identity <- list (
   conv_batch_size32_4    = c(-1,0,0,1,0,0,0,0),
   rand_batch_size32_16   = c(0,0,0,0,0,0,-1,1),
   rand_batch_size32_4    = c(0,0,0,0,-1,0,0,1),
-  batch_size32_conv_rand = c(0,0,0,-1,0,0,0,1),
-  batch_size4_conv_rand  = c(-1,0,0,0,1,0,0,0)
+  batch_size32_conv_rand = c(0,0,0,1,0,0,0,-1),
+  batch_size4_conv_rand  = c(1,0,0,0,-1,0,0,0)
 )
 
 posthoc_identity <- contrast(estimated_marginal_means_identity, contrasts_identity, adjust = "bonf")

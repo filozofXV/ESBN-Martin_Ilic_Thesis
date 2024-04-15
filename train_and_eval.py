@@ -92,7 +92,7 @@ def train(args, model, device, optimizer, epoch, all_imgs, train_loader):
 					 '[Batch: ' + str(batch_idx) + ' of ' + str(len(train_loader)) + '] ' + \
 					 '[Loss = ' + '{:.4f}'.format(loss.item()) + '] ' + \
 					 '[Accuracy = ' + '{:.2f}'.format(acc) + '] ' + \
-					 '[' + '{:.3f}'.format(batch_dur) + ' sec/batch]')
+					 str(y_pred))
 			# Save progress to file
 			train_prog_f.write(str(batch_idx) + ' ' +\
 							   '{:.4f}'.format(loss.item()) + ' ' + \
@@ -129,7 +129,8 @@ def test(args, model, device, all_imgs, test_loader):
 		acc = torch.eq(y_pred, y).float().mean().item() * 100.0
 		all_acc.append(acc)
 		# Report progress
-		log.info('[Batch: ' + str(batch_idx) + ' of ' + str(len(test_loader)) + ']')
+		log.info('[Batch: ' + str(batch_idx) + ' of ' + str(len(test_loader)) + ']' + \
+		   str(y_pred))
 	# Report overall test performance
 	avg_loss = np.mean(all_loss)
 	avg_acc = np.mean(all_acc)

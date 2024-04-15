@@ -90,20 +90,32 @@ def train(args, model, device, optimizer, epoch, all_imgs, train_loader):
 		if batch_idx % args.log_interval == 0:
 			# Accuracy
 			acc  = torch.eq(y_pred, y).float().mean().item() * 100.0
-			acc2 = torch.eq(y_pred, idea).float().mean().item() * 100.0
-			# Report 	
-			log.info('[Idea:  ' + str(idea)  + '] ' + \
-                     '[Y_pred: ' + str (y_pred) + '] ' + \
+
+			y_equal = y_pred[~torch.eq(y_pred,y)]
+
+			if len(y_equal) == 0:
+				acc2 = "NA"
+				acc3 = "NA"
+			else:
+				idea_equal = idea[~torch.eq(y_pred,y)]
+				# perform logistic regression on this  
+				# when it makes a mistake, is it an associative error 
+				# 
+				acc2 = torch.eq(y_equal, idea_equal).float().mean().item() * 100.0
+				acc3 = acc2 * len(y_pred)/len(y_equal)
+			# Report 	[23,45,60,]
+			log.info('[Idea:  ' + str(acc3)  + '] ' + \
 				     '[Epoch: ' + str(epoch) + '] ' + \
 					 '[Batch: ' + str(batch_idx) + ' of ' + str(len(train_loader)) + '] ' + \
 					 '[Loss = ' + '{:.4f}'.format(loss.item()) + '] ' + \
 					 '[Accuracy = ' + '{:.2f}'.format(acc) + '] ' + \
-					 '[Inhibition = ' + '{:.2f}'.format(acc2) + '] ' + \
+					 '[Association = ' + str(acc2) + '] ' + \
 					 '[' + '{:.3f}'.format(batch_dur) + ' sec/batch]')
 			# Save progress to file
 			train_prog_f.write(str(batch_idx) + ' ' +\
 							   '{:.4f}'.format(loss.item()) + ' ' + \
-							   '{:.2f}'.format(acc) + '\n')
+							   '{:.2f}'.format(acc) + '\n' +
+							   str(acc3) + '\n')
 	train_prog_f.close()
 
 def test(args, model, device, all_imgs, test_loader):
@@ -113,12 +125,16 @@ def test(args, model, device, all_imgs, test_loader):
 	# Iterate over batches
 	all_acc = []
 	all_loss = []
-	for batch_idx, (seq_ind, y) in enumerate(test_loader):
+	all_idea_controlled = []
+	all_idea = []
+	all_one = []
+	for batch_idx, (seq_ind, y, idea) in enumerate(test_loader):
 		y = y.type(torch.LongTensor)
 		x_seq = all_imgs[seq_ind.long(),:,:]
 		# Load data to device
 		x_seq = x_seq.to(device)
 		y = y.to(device)
+		idea = idea.to(device)
 		# Run model 
 		if 'MNM' in args.model_name:
 			y_pred_linear, y_pred, const_loss = model(x_seq, device)
@@ -135,6 +151,29 @@ def test(args, model, device, all_imgs, test_loader):
 		# Accuracy
 		acc = torch.eq(y_pred, y).float().mean().item() * 100.0
 		all_acc.append(acc)
+
+		
+		y_equal = y_pred[~torch.eq(y_pred,y)]
+
+		if len(y_equal) == 0:
+			acc2 = "NA"
+			acc3 = "NA"
+			acc_one = 1
+			all_idea.append(acc2)
+			all_idea_controlled.append(acc3)
+			all_one.append(str(acc_one))
+			
+		else:
+			idea_equal = idea[~torch.eq(y_pred,y)]
+			# perform logistic regression on this  
+			# when it makes a mistake, is it an associative error 
+			# overall error: 100 - acc; % of error associative: acc2; % of overall trials associative: acc2 * len(y_equal)/len(y_pred) 
+			acc2 = torch.eq(idea_equal, y_equal).float().mean().item() * 100.0
+			acc3 = acc2 * len(y_equal)/len(y_pred)
+			acc_one = acc + acc3 + (1 - acc - acc3)
+			all_idea.append(str(len(y_equal)))
+			all_idea_controlled.append(str(len(idea_equal)))
+			all_one.append(str(acc_one))
 		# Report progress
 		log.info('[Batch: ' + str(batch_idx) + ' of ' + str(len(test_loader)) + ']')
 	# Report overall test performance
@@ -142,7 +181,7 @@ def test(args, model, device, all_imgs, test_loader):
 	avg_acc = np.mean(all_acc)
 	log.info('[Summary] ' + \
 			 '[Loss = ' + '{:.4f}'.format(avg_loss) + '] ' + \
-			 '[Accuracy = ' + '{:.2f}'.format(avg_acc) + ']')
+			 '[Accuracy = ' + '{:.2f}'.format(avg_acc) + '] ' )
 	# Save performance
 	test_dir = './test/'
 	check_path(test_dir)
@@ -154,9 +193,11 @@ def test(args, model, device, all_imgs, test_loader):
 	check_path(model_dir)
 	test_fname = model_dir + 'run' + args.run + '.txt'
 	test_f = open(test_fname, 'w')
-	test_f.write('loss acc\n')
+	test_f.write('loss acc association association_controled\n')
 	test_f.write('{:.4f}'.format(avg_loss) + ' ' + \
-				 '{:.2f}'.format(avg_acc))
+				 '{:.2f}'.format(avg_acc) + ' ' + \
+				 ",".join(all_idea) + ' ' + \
+					",".join(all_idea_controlled))
 	test_f.close()
 
 def main():
@@ -172,7 +213,7 @@ def main():
 	parser.add_argument('--train_gen_method', type=str, default='full_space', help="{'full_space', 'subsample'}")
 	parser.add_argument('--test_gen_method', type=str, default='full_space', help="{'full_space', 'subsample'}")
 	parser.add_argument('--n_shapes', type=int, default=100, help="n = total number of shapes available for training and testing")
-	parser.add_argument('--m_holdout', type=int, default=0, help="m = number of objects (out of n) withheld during training")
+	parser.add_argument('--m_holdout', type=int, default=95, help="m = number of objects (out of n) withheld during training")
 	# Training settings
 	parser.add_argument('--train_batch_size', type=int, default=4)
 	parser.add_argument('--train_set_size', type=int, default=10000)

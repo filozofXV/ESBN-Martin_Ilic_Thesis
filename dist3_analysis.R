@@ -6,12 +6,12 @@
 # install.packages("emmeans")
 # remotes::install_github("dstanley4/apaTables")
 
+library("apaTables")
 library("rstudioapi")   
 library("ggpubr")
 library("car")
 library("emmeans")
-library("apaTables")
-
+library("dplyr")
 # CONVOLUTIONAL ENCODER - Loading of data
 #------------------------------------
 
@@ -29,7 +29,7 @@ setwd("./test/dist3/batchconv32/ESBN_contextnorm_lr0.0005")
 # are in separate .txt files (run1.txt, run2.txt, ...)
 dist3_batchconv32 <- c()
 
-for (i in 1:10) {
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   dist3_batchconv32 <- c(dist3_batchconv32, run_i$acc)
 }
@@ -40,7 +40,7 @@ setwd("./test/dist3/batchconv16/ESBN_contextnorm_lr0.0005")
 
 dist3_batchconv16 <- c()
 
-for (i in 1:10) {
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   dist3_batchconv16 <- c(dist3_batchconv16, run_i$acc)
 }
@@ -51,7 +51,7 @@ setwd("./test/dist3/batchconv8/ESBN_contextnorm_lr0.0005")
 
 dist3_batchconv8 <- c()
 
-for (i in 1:10) {
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   dist3_batchconv8 <- c(dist3_batchconv8, run_i$acc)
 }
@@ -62,7 +62,7 @@ setwd("./test/dist3/batchconv4/ESBN_contextnorm_lr0.0005")
 
 dist3_batchconv4 <- c()
 
-for (i in 1:10) {
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   dist3_batchconv4 <- c(dist3_batchconv4, run_i$acc)
 }
@@ -76,7 +76,7 @@ setwd("./test/dist3/batchrand32/ESBN_contextnorm_lr0.0005")
 
 dist3_batchrand32 <- c()
 
-for (i in 1:10) {
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   dist3_batchrand32 <- c(dist3_batchrand32, run_i$acc)
 }
@@ -87,7 +87,7 @@ setwd("./test/dist3/batchrand16/ESBN_contextnorm_lr0.0005")
 
 dist3_batchrand16 <- c()
 
-for (i in 1:10) {
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   dist3_batchrand16 <- c(dist3_batchrand16, run_i$acc)
 }
@@ -98,7 +98,7 @@ setwd("./test/dist3/batchrand8/ESBN_contextnorm_lr0.0005")
 
 dist3_batchrand8 <- c()
 
-for (i in 1:10) {
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   dist3_batchrand8 <- c(dist3_batchrand8, run_i$acc)
 }
@@ -109,7 +109,10 @@ setwd("./test/dist3/batchrand4/ESBN_contextnorm_lr0.0005")
 
 dist3_batchrand4 <- c()
 
-for (i in 1:10) {
+run_r <- read.delim("run1.txt", header = T, sep = " ")
+strsplit(run_r$association, ",")
+
+for (i in 1:100) {
   run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
   dist3_batchrand4 <- c(dist3_batchrand4, run_i$acc)
 }
@@ -289,8 +292,8 @@ contrasts_dist3 <- list (
   conv_batch_size32_4    = c(-1,0,0,1,0,0,0,0),
   rand_batch_size32_16   = c(0,0,0,0,0,0,-1,1),
   rand_batch_size32_4    = c(0,0,0,0,-1,0,0,1),
-  batch_size32_conv_rand = c(0,0,0,-1,0,0,0,1),
-  batch_size4_conv_rand  = c(-1,0,0,0,1,0,0,0)
+  batch_size32_conv_rand = c(0,0,0,1,0,0,0,-1),
+  batch_size4_conv_rand  = c(1,0,0,0,-1,0,0,0)
 )
 
 # Perform post hoc tests
@@ -303,4 +306,105 @@ posthoc_dist3
 
 table_dist3 <- apa.aov.table(two_way_anova_dist3, table.number = 1)
 apa.save("table_dist3_2.doc", table_dist3)
+#---------------------------------------------------------------------
+
+
+# CONVOLUTIONAL ENCODER - Loading of data
+#------------------------------------
+
+# 32 batch size
+
+# These two lines of code first set the working directory 
+# to this file's location, and then navigate to the specific
+# directory for each condition (e.g., conv32)
+par(mfrow = c(2,2))
+setwd(dirname(getActiveDocumentContext()$path))  
+setwd("./test/dist3/batchconv32/ESBN_contextnorm_lr0.0005")
+
+
+# Create a vector, and load data from the folder which 
+# are in separate .txt files (run1.txt, run2.txt, ...)
+dist3_assoc32 <- c()
+dist3_error32 <- c()
+
+for (i in 1:100) {
+  run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
+  dist3_assoc32 <- c(dist3_assoc32, 
+                     round(as.numeric(strsplit(run_i$association, ",")[[1]])[!is.na(as.numeric(strsplit(run_i$association, ",")[[1]]))]/100, 2))
+  dist3_error32 <- c(dist3_error32,
+                     round(as.numeric(strsplit(run_i$error, ",")[[1]])[!is.na(as.numeric(strsplit(run_i$error, ",")[[1]]))]/100, 2))
+}
+
+dist3_total32 <- round(dist3_assoc32*dist3_error32,2) * 100
+
+
+
+ggplot() + aes(dist3_total32) + 
+  geom_histogram() + 
+  labs(title = "Histogram of association error count (out of 100 trials) in test runs (Convolutional, batch size 32)", 
+       x = "Number of association errors/run of 100 trials", y = "Count")
+# 16 batch size
+setwd(dirname(getActiveDocumentContext()$path))  
+setwd("./test/dist3/batchconv16/ESBN_contextnorm_lr0.0005")
+
+dist3_assoc16 <- c()
+dist3_error16 <- c()
+
+for (i in 1:100) {
+  run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
+  dist3_assoc16 <- c(dist3_assoc16, 
+                    round(as.numeric(strsplit(run_i$association, ",")[[1]])[!is.na(as.numeric(strsplit(run_i$association, ",")[[1]]))]/100, 2))
+  dist3_error16 <- c(dist3_error16,
+                    round(as.numeric(strsplit(run_i$error, ",")[[1]])[!is.na(as.numeric(strsplit(run_i$error, ",")[[1]]))]/100, 2))
+}
+
+dist3_total16 <- round(dist3_assoc16*dist3_error16,2)*100
+
+ggplot() + aes(dist3_total16) + 
+  geom_histogram() + 
+  labs(title = "Histogram of association error count (out of 100 trials) in test runs (Convolutional, batch size 16)", 
+       x = "Number of association errors/run of 100 trials", y = "Count")
+# 8 batch size 
+setwd(dirname(getActiveDocumentContext()$path))  
+setwd("./test/dist3/batchconv8/ESBN_contextnorm_lr0.0005")
+
+dist3_assoc8 <- c()
+dist3_error8 <- c()
+
+for (i in 1:100) {
+  run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
+  dist3_assoc8 <- c(dist3_assoc8, 
+                    round(as.numeric(strsplit(run_i$association, ",")[[1]])[!is.na(as.numeric(strsplit(run_i$association, ",")[[1]]))]/100, 2))
+  dist3_error8 <- c(dist3_error8,
+                    round(as.numeric(strsplit(run_i$error, ",")[[1]])[!is.na(as.numeric(strsplit(run_i$error, ",")[[1]]))]/100, 2))
+}
+
+dist3_total8 <- round(dist3_assoc8*dist3_error8,2)*100
+
+ggplot() + aes(dist3_total8) + 
+  geom_histogram() + 
+  labs(title = "Histogram of association error count (out of 100 trials) in test runs (Convolutional, batch size 8)", 
+       x = "Number of association errors/run of 100 trials", y = "Count")
+# 4 batch size
+setwd(dirname(getActiveDocumentContext()$path))  
+setwd("./test/dist3/batchconv4/ESBN_contextnorm_lr0.0005")
+
+dist3_assoc4 <- c()
+dist3_error4 <- c()
+
+for (i in 1:100) {
+  run_i <- read.delim(paste("run",as.character(i),".txt", sep = ""), header = T, sep = " ")
+  dist3_assoc4 <- c(dist3_assoc4, 
+                    round(as.numeric(strsplit(run_i$association, ",")[[1]])[!is.na(as.numeric(strsplit(run_i$association, ",")[[1]]))]/100, 2))
+  dist3_error4 <- c(dist3_error4,
+                    round(as.numeric(strsplit(run_i$error, ",")[[1]])[!is.na(as.numeric(strsplit(run_i$error, ",")[[1]]))]/100, 2))
+}
+
+dist3_total4 <- round(dist3_assoc4*dist3_error4, 2)*100
+
+ggplot() + aes(dist3_total4) + 
+  geom_histogram() + 
+  labs(title = "Histogram of association error count (out of 100 trials) in test runs (Convolutional, batch size 4)", 
+       x = "Number of association errors/run of 100 trials", y = "Count")
+
 

@@ -5,7 +5,7 @@
 for r in {1..10}
 do
 	# batch_size = 32
-	py ./train_and_eval.py --encoder "rand" --run $r --train_batch_size 32 --model_name "ESBN" --encoder "rand" --norm_type contextnorm --lr 5e-4 --task dist3 --m_holdout 95 --epochs 150
+	py ./train_and_eval_dist3.py --encoder "rand" --run $r --train_batch_size 32 --model_name "ESBN" --encoder "rand" --norm_type contextnorm --lr 5e-4 --task dist3 --m_holdout 95 --epochs 150
 	
 	# batch_size = 16
 	py ./train_and_eval.py --encoder "rand" --run $r --train_batch_size 16 --model_name "ESBN" --encoder "rand" --norm_type contextnorm --lr 5e-4 --task dist3 --m_holdout 95 --epochs 150
